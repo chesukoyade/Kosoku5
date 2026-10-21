@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高速指示 翻訳ボード - 現場用シンプル指示カード</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card-enter {
+            animation: slideIn 0.25s ease-out forwards;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-emerald-500 selection:text-white min-h-screen flex flex-col justify-between">
+
+    <!-- メインコンテンツ -->
+    <div class="max-w-md mx-auto w-full px-4 py-5 space-y-4 pb-24">
+        
+        <!-- ヘッダー -->
+        <header class="flex items-center justify-between bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="flex items-center space-x-2.5">
+                <span class="bg-emerald-700 text-white text-xs font-black px-2.5 py-1 rounded-md tracking-wider">EXPRESS</span>
+                <div>
+                    <h1 class="text-base font-bold text-slate-900 leading-tight">高速指示 翻訳ボード</h1>
+                    <p class="text-[11px] text-slate-500 font-medium">現場用 シンプル指示カード</p>
+                </div>
+            </div>
+            <button onclick="resetToDefaults()" class="flex items-center text-xs font-semibold text-slate-500 hover:text-emerald-700 bg-slate-100 hover:bg-slate-200/70 px-2.5 py-1.5 rounded-lg transition-colors">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                初期化
+            </button>
+        </header>
+
+        <!-- 言語切替タブ -->
+        <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-200/80">
+            <div class="grid grid-cols-3 gap-2" id="langTabs">
+                <button onclick="switchLanguage('en')" id="tab-en" class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-200 border-emerald-600 bg-emerald-50/50 text-emerald-900">
+                    <span class="text-2xl mb-1" role="img" aria-label="USA">🇺🇸</span>
+                    <span class="text-xs font-bold">英語</span>
+                </button>
+                <button onclick="switchLanguage('ko')" id="tab-ko" class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-200 border-transparent hover:bg-slate-50 text-slate-600">
+                    <span class="text-2xl mb-1" role="img" aria-label="Korea">🇰🇷</span>
+                    <span class="text-xs font-bold">韓国語</span>
+                </button>
+                <button onclick="switchLanguage('zh')" id="tab-zh" class="flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-200 border-transparent hover:bg-slate-50 text-slate-600">
+                    <span class="text-2xl mb-1" role="img" aria-label="China">🇨🇳</span>
+                    <span class="text-xs font-bold">中国語</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 音声設定バー -->
+        <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">音声再生速度</p>
+                <p class="text-sm font-bold text-slate-800" id="speedStatus">標準スピード (1.0x)</p>
+            </div>
+            <button onclick="toggleSpeed()" id="speedBtn" class="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition-all">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="speedBtnText">スロー(0.6x)に切替</span>
+            </button>
+        </div>
+
+        <!-- 新規追加フォーム -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+            <div class="flex justify-between items-center">
+                <label for="jaInput" class="block text-xs font-bold text-slate-700">新しい指示文を追加</label>
+                <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">AI リアルタイム自動翻訳</span>
+            </div>
+            
+            <div class="relative">
+                <input type="text" id="jaInput" placeholder="例: ガードレールの外へ退避してください" 
+                    class="w-full px-3.5 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-slate-800 text-sm font-medium placeholder-slate-400 shadow-inner"
+                    onkeypress="if(event.key==='Enter') addNewCard()">
+            </div>
+
+            <button onclick="addNewCard()" id="addBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-emerald-600/20 transition-all duration-150 flex items-center justify-center space-x-2 text-sm">
+                <svg class="w-4 h-4 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+                <span>指示カードを追加</span>
+            </button>
+        </div>
+
+        <!-- カード一覧ヘッダー -->
+        <div class="flex items-center justify-between px-1 pt-1">
+            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">指示カード一覧</h2>
+            <span class="text-xs font-bold text-slate-400" id="cardCount">0件</span>
+        </div>
+
+        <!-- カードコンテナ -->
+        <div id="cardContainer" class="space-y-3">
+            <!-- JavaScriptで動的生成 -->
+        </div>
+
+    </div>
+
+    <!-- モーダル（拡大表示・メガ表示用） -->
+    <div id="megaModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm z-50 hidden flex-col justify-between p-6 transition-all duration-300">
+        <div class="flex justify-between items-center text-white">
+            <span class="bg-emerald-600 font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider" id="modalLangBadge">ENGLISH</span>
+            <button onclick="closeModal()" class="p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="my-auto text-center space-y-6 px-2">
+            <p class="text-white text-3xl sm:text-4xl md:text-5xl font-black leading-snug tracking-wide select-none" id="modalTargetText"></p>
+            <p class="text-slate-400 text-lg sm:text-xl font-bold border-t border-slate-800 pt-4 max-w-lg mx-auto" id="modalJaText"></p>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="playModalSpeech()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-2xl text-base shadow-lg flex items-center justify-center space-x-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+                <span>大音量で再生</span>
+            </button>
+            <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-6 py-4 rounded-2xl text-base">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <!-- アプリケーションロジック -->
+    <script>
+        const DEFAULT_CARDS = [
+            { id: 1, ja: "外に避難してください", en: "Please evacuate to the outside.", ko: "밖으로 피하십시오.", zh: "请疏散到室外。" },
+            { id: 2, ja: "右側の車線へ移動してください", en: "Please move to the right lane.", ko: "오른쪽 차선으로 이동해 주세요.", zh: "请移动到右侧车道。" },
+            { id: 3, ja: "発煙筒・三角停止板を設置してください", en: "Please set up a road flare and warning triangle.", ko: "발연통과 삼각표지판을 설치하십시오.", zh: "请设置照明弹和三角警告牌。" },
+            { id: 4, ja: "非常電話で通報してください", en: "Please report using the emergency telephone.", ko: "비상전화로 신고하십시오.", zh: "请使用紧急电话报警。" }
+        ];
+
+        const DICTIONARY = [
+            { ja: "外に避難してください", en: "Please evacuate outside.", ko: "밖으로 피하십시오.", zh: "请疏散到室外。" },
+            { ja: "ガードレールの外へ退避してください", en: "Please evacuate to the outside of the guardrail.", ko: "가드레일 밖으로 피하십시오.", zh: "请撤离到护栏外。" },
+            { ja: "車内で待機してください", en: "Please wait inside your vehicle.", ko: "차 안에서 대기하십시오.", zh: "请在车内等待。" },
+            { ja: "ハザードランプを点灯してください", en: "Please turn on your hazard lights.", ko: "비상등을 켜십시오.", zh: "请打开危险警告灯。" },
+            { ja: "エンジンを停止してください", en: "Please turn off your engine.", ko: "엔진을 끄십시오.", zh: "请关闭发动机。" },
+            { ja: "後方に気を付けてください", en: "Please watch out for traffic behind you.", ko: "후방을 주의하십시오.", zh: "请注意后方车辆。" },
+            { ja: "警察と救急を呼んでいます", en: "We are calling the police and ambulance.", ko: "경찰과 구급차를 부르고 있습니다.", zh: "正在呼叫警察和救护车。" }
+        ];
+
+        let currentLang = 'en';
+        let speechRate = 1.0;
+        let cards = [];
+        let modalCurrentText = '';
+        let modalCurrentLangCode = 'en';
+
+        window.onload = function() {
+            const saved = localStorage.getItem('express_translation_cards');
+            if (saved) {
+                try { cards = JSON.parse(saved); } catch(e) { cards = [...DEFAULT_CARDS]; }
+            } else {
+                cards = [...DEFAULT_CARDS];
+            }
+            renderCards();
+        };
+
+        function saveCards() {
+            localStorage.setItem('express_translation_cards', JSON.stringify(cards));
+            document.getElementById('cardCount').innerText = `${cards.length}件`;
+        }
+
+        function resetToDefaults() {
+            if (confirm('指示カードを初期状態に戻しますか？')) {
+                cards = [...DEFAULT_CARDS];
+                saveCards();
+                renderCards();
+            }
+        }
+
+        function switchLanguage(lang) {
+            currentLang = lang;
+            ['en', 'ko', 'zh'].forEach(l => {
+                const btn = document.getElementById(`tab-${l}`);
+                if (l === lang) {
+                    btn.className = "flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-200 border-emerald-600 bg-emerald-50/50 text-emerald-900 font-bold shadow-sm";
+                } else {
+                    btn.className = "flex flex-col items-center justify-center p-2.5 rounded-xl border-2 transition-all duration-200 border-transparent hover:bg-slate-50 text-slate-600";
+                }
+            });
+            renderCards();
+        }
+
+        function toggleSpeed() {
+            const speedStatus = document.getElementById('speedStatus');
+            const speedBtnText = document.getElementById('speedBtnText');
+            if (speechRate === 1.0) {
+                speechRate = 0.6;
+                speedStatus.innerText = "スロー再生 (0.6x)";
+                speedBtnText.innerText = "標準(1.0x)に切替";
+            } else {
+                speechRate = 1.0;
+                speedStatus.innerText = "標準スピード (1.0x)";
+                speedBtnText.innerText = "スロー(0.6x)に切替";
+            }
+        }
+
+        async function translateText(text) {
+            const dictMatch = DICTIONARY.find(item => item.ja.trim() === text.trim());
+            if (dictMatch) return { en: dictMatch.en, ko: dictMatch.ko, zh: dictMatch.zh };
+
+            try {
+                const systemPrompt = "You are a professional highway safety translator. Translate the given Japanese sentence accurately and naturally into English, Korean, and Simplified Chinese.";
+                const userQuery = `Translate the following Japanese instruction into English, Korean, and Chinese:\n"${text}"`;
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    en: { type: "STRING" },
+                                    ko: { type: "STRING" },
+                                    zh: { type: "STRING" }
+                                },
+                                required: ["en", "ko", "zh"]
+                            }
+                        }
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (jsonText) {
+                        const parsed = JSON.parse(jsonText);
+                        if (parsed.en && parsed.ko && parsed.zh) return parsed;
+                    }
+                }
+            } catch (err) {
+                console.warn("API translation fallback:", err);
+            }
+
+            try {
+                const fetchMyMemory = async (targetLang) => {
+                    const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=ja|${targetLang}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.responseData?.translatedText) return data.responseData.translatedText;
+                    }
+                    return null;
+                };
+
+                const [enRes, koRes, zhRes] = await Promise.all([
+                    fetchMyMemory('en'),
+                    fetchMyMemory('ko'),
+                    fetchMyMemory('zh-CN')
+                ]);
+
+                return { en: enRes || text, ko: koRes || text, zh: zhRes || text };
+            } catch (e) {
+                console.error(e);
+            }
+
+            return { en: text, ko: text, zh: text };
+        }
+
+        async function addNewCard() {
+            const inputEl = document.getElementById('jaInput');
+            const addBtn = document.getElementById('addBtn');
+            const jaText = inputEl.value.trim();
+            if (!jaText) return;
+
+            addBtn.disabled = true;
+            addBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            addBtn.innerHTML = `<span>AI翻訳・カード作成中...</span>`;
+
+            const translations = await translateText(jaText);
+            cards.unshift({ id: Date.now(), ja: jaText, en: translations.en, ko: translations.ko, zh: translations.zh });
+            saveCards();
+            renderCards();
+
+            inputEl.value = '';
+            addBtn.disabled = false;
+            addBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            addBtn.innerHTML = `<span>指示カードを追加</span>`;
+        }
+
+        function deleteCard(id) {
+            cards = cards.filter(c => c.id !== id);
+            saveCards();
+            renderCards();
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardContainer');
+            document.getElementById('cardCount').innerText = `${cards.length}件`;
+
+            if (cards.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 bg-white rounded-2xl border border-dashed border-slate-300"><p class="text-xs text-slate-400 font-bold">指示カードがありません</p></div>`;
+                return;
+            }
+
+            container.innerHTML = cards.map((card, idx) => {
+                const translatedText = card[currentLang] || card.ja;
+                const langLabel = currentLang.toUpperCase();
+                return `
+                    <div class="card-enter bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm relative">
+                        <div class="flex items-center justify-between text-xs text-slate-400 font-bold mb-2">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded-md text-slate-600">指示 #${cards.length - idx}</span>
+                            <button onclick="deleteCard(${card.id})" class="text-slate-400 hover:text-red-500 p-1">削除</button>
+                        </div>
+                        <p class="text-lg font-black text-slate-900 mb-2">${escapeHtml(card.ja)}</p>
+                        <div class="bg-emerald-50/80 border border-emerald-200/60 p-3 rounded-xl mb-3">
+                            <p class="text-emerald-950 font-bold text-base">
+                                <span class="inline-block text-xs font-black bg-emerald-700 text-white px-1.5 py-0.5 rounded mr-1.5">${langLabel}</span>
+                                <span>${escapeHtml(translatedText)}</span>
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button onclick="openModal('${escapeHtml(card.ja)}', '${escapeHtml(translatedText)}', '${currentLang}')" class="bg-slate-900 text-white font-bold py-2.5 px-3 rounded-xl text-xs">相手に見せる (拡大)</button>
+                            <button onclick="speakText('${escapeHtml(translatedText)}', '${currentLang}')" class="bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs">音声で伝える</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 女性の声を固定してクリアに読み上げるiPhone対応版
+        function speakText(text, langKey) {
+            if (!('speechSynthesis' in window)) {
+                alert('音声読み上げ未対応のブラウザです。');
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = speechRate;
+
+            const langCodeMap = {
+                'en': 'en-US',
+                'ko': 'ko-KR',
+                'zh': 'zh-CN'
+            };
+            utterance.lang = langCodeMap[langKey] || 'en-US';
+
+            // iOSで確実に「女性の声」を優先選択するロジック
+            setTimeout(() => {
+                const voices = window.speechSynthesis.getVoices();
+                if (voices && voices.length > 0) {
+                    // 各言語で女性の音声としてよく使われるキーワード（Samantha, Yuna, Ting-Ting, Karen, Victoriaなど）を優先検索
+                    const femaleKeywords = {
+                        'en': ['samantha', 'karen', 'victoria', 'siri (female)', 'female'],
+                        'ko': ['yuna', 'heami', 'female'],
+                        'zh': ['ting-ting', 'sin-ji', 'meijia', 'female']
+                    };
+
+                    const keywords = femaleKeywords[langKey] || [];
+                    let selectedVoice = null;
+
+                    // 1. キーワードに一致する女性音声を探す
+                    for (let kw of keywords) {
+                        selectedVoice = voices.find(v => v.lang.toLowerCase().includes(langKey.toLowerCase()) && v.name.toLowerCase().includes(kw));
+                        if (selectedVoice) break;
+                    }
+
+                    // 2. なければ対象言語の音声の中から最初に見つかったものを固定
+                    if (!selectedVoice) {
+                        selectedVoice = voices.find(v => v.lang.toLowerCase().includes(langKey.toLowerCase()) || v.lang.replace('_','-').toLowerCase().includes(utterance.lang.toLowerCase()));
+                    }
+
+                    if (selectedVoice) {
+                        utterance.voice = selectedVoice;
+                    }
+                }
+                window.speechSynthesis.speak(utterance);
+            }, 50);
+        }
+
+        function openModal(jaText, targetText, langKey) {
+            const modal = document.getElementById('megaModal');
+            document.getElementById('modalLangBadge').innerText = ({ 'en': 'ENGLISH', 'ko': 'KOREAN', 'zh': 'CHINESE' })[langKey];
+            document.getElementById('modalTargetText').innerText = targetText;
+            document.getElementById('modalJaText').innerText = jaText;
+            modalCurrentText = targetText;
+            modalCurrentLangCode = langKey;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('megaModal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        }
+
+        function playModalSpeech() {
+            if (modalCurrentText && modalCurrentLangCode) {
+                speakText(modalCurrentText, modalCurrentLangCode);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
